@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { 
   Card, Title, TextInput, Select, Button, Stack, Group, Grid, Text, 
-  Loader, Center, Badge, Timeline, Modal, Textarea, Alert, ScrollArea
+  Loader, Center, Badge, Timeline, Modal, Textarea, Alert, NumberInput
 } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { IconArrowLeft, IconTruck, IconMapPin, IconPlus, IconInfoCircle } from '@tabler/icons-react'
+import { IconArrowLeft, IconTruck, IconMapPin, IconPlus, IconInfoCircle, IconUser, IconPackage } from '@tabler/icons-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
@@ -19,7 +19,19 @@ const shipmentSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
   status: z.string().min(1, 'Status is required'),
   user_id: z.string().nullable(),
-  estimated_delivery: z.string().nullable(),
+  estimated_delivery: z.any().nullable(),
+  sender_name: z.string().nullable(),
+  sender_phone: z.string().nullable(),
+  sender_email: z.string().email().nullable().or(z.literal('')).or(z.literal(null)),
+  receiver_name: z.string().nullable(),
+  receiver_phone: z.string().nullable(),
+  receiver_email: z.string().email().nullable().or(z.literal('')).or(z.literal(null)),
+  weight: z.number().nullable(),
+  dimensions: z.string().nullable(),
+  package_type: z.string().nullable(),
+  shipping_method: z.string().nullable(),
+  notes: z.string().nullable(),
+  declared_value: z.number().nullable(),
 })
 
 const trackingSchema = z.object({
@@ -27,6 +39,9 @@ const trackingSchema = z.object({
   description: z.string(),
   status: z.string().min(1, 'Status is required'),
 })
+
+const PACKAGE_TYPES = ['Standard', 'Fragile', 'Perishable', 'Hazardous', 'Documents', 'Electronics', 'Clothing', 'Other']
+const SHIPPING_METHODS = ['Standard', 'Express', 'Overnight', 'Economy', 'Priority', 'Freight']
 
 export default function ShipmentDetail() {
   const router = useRouter()
@@ -87,7 +102,19 @@ export default function ShipmentDetail() {
         destination: shipment.destination,
         status: shipment.status,
         user_id: shipment.user_id,
-        estimated_delivery: shipment.estimated_delivery || null,
+        estimated_delivery: shipment.estimated_delivery ? new Date(shipment.estimated_delivery) : null,
+        sender_name: shipment.sender_name || '',
+        sender_phone: shipment.sender_phone || '',
+        sender_email: shipment.sender_email || '',
+        receiver_name: shipment.receiver_name || '',
+        receiver_phone: shipment.receiver_phone || '',
+        receiver_email: shipment.receiver_email || '',
+        weight: shipment.weight || null,
+        dimensions: shipment.dimensions || '',
+        package_type: shipment.package_type || 'Standard',
+        shipping_method: shipment.shipping_method || 'Standard',
+        notes: shipment.notes || '',
+        declared_value: shipment.declared_value || null,
       })
     }
   }, [shipment, reset])
@@ -99,8 +126,20 @@ export default function ShipmentDetail() {
         origin: data.origin,
         destination: data.destination,
         status: data.status,
-        user_id: data.user_id,
+        user_id: data.user_id || null,
         estimated_delivery: data.estimated_delivery || null,
+        sender_name: data.sender_name || null,
+        sender_phone: data.sender_phone || null,
+        sender_email: data.sender_email || null,
+        receiver_name: data.receiver_name || null,
+        receiver_phone: data.receiver_phone || null,
+        receiver_email: data.receiver_email || null,
+        weight: data.weight || null,
+        dimensions: data.dimensions || null,
+        package_type: data.package_type || null,
+        shipping_method: data.shipping_method || null,
+        notes: data.notes || null,
+        declared_value: data.declared_value || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id)
       if (error) throw error
@@ -190,19 +229,23 @@ export default function ShipmentDetail() {
         <Badge size="lg" color={getStatusColor(shipment.status)}>{shipment.status}</Badge>
       </Group>
 
-      <Grid>
-        <Grid.Col span={12}>
+      <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))}>
+        <Stack gap="lg">
           <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Title order={4} mb="md">Edit Shipment</Title>
-            <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))}>
-              <Stack gap="md">
+            <Group gap="xs" mb="md">
+              <IconTruck size={20} />
+              <Title order={4}>Shipment Details</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Tracking Number"
                   {...register('tracking_number')}
                   error={errors.tracking_number?.message}
                   required
                 />
-                
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Select
                   label="Status"
                   data={SHIPMENT_STATUSES}
@@ -211,21 +254,24 @@ export default function ShipmentDetail() {
                   error={errors.status?.message}
                   required
                 />
-                
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Origin"
                   {...register('origin')}
                   error={errors.origin?.message}
                   required
                 />
-                
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Destination"
                   {...register('destination')}
                   error={errors.destination?.message}
                   required
                 />
-                
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Select
                   label="Assign to User"
                   placeholder="Select a user (optional)"
@@ -235,53 +281,176 @@ export default function ShipmentDetail() {
                   clearable
                   searchable
                 />
-                
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <DateTimePicker
                   label="Estimated Delivery"
                   value={watch('estimated_delivery')}
                   onChange={(v) => setValue('estimated_delivery', v)}
                   clearable
                 />
-
-                <Group justify="flex-end" mt="md">
-                  <Button type="submit" loading={updateMutation.isPending}>Save Changes</Button>
-                </Group>
-              </Stack>
-            </form>
+              </Grid.Col>
+            </Grid>
           </Card>
-        </Grid.Col>
 
-        <Grid.Col span={12}>
           <Card shadow="sm" padding="lg" radius="md" withBorder>
-            <Group justify="space-between" mb="md" wrap="wrap">
-              <Title order={4}>Tracking History</Title>
-              <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => setTrackingModal(true)}>
-                Add Update
-              </Button>
+            <Group gap="xs" mb="md">
+              <IconUser size={20} />
+              <Title order={4}>Sender Information</Title>
             </Group>
-            
-            {!trackingUpdates?.length ? (
-              <Text c="dimmed" ta="center" py="md">No tracking updates yet</Text>
-            ) : (
-              <Timeline active={0} bulletSize={24} lineWidth={2}>
-                {trackingUpdates?.map((update, index) => (
-                  <Timeline.Item
-                    key={update.id}
-                    bullet={index === 0 ? <IconTruck size={12} /> : <IconMapPin size={12} />}
-                    title={update.status}
-                  >
-                    <Text c="dimmed" size="sm">{update.location}</Text>
-                    {update.description && <Text size="sm">{update.description}</Text>}
-                    <Text size="xs" mt={4} c="dimmed">
-                      {new Date(update.occurrence_time).toLocaleString()}
-                    </Text>
-                  </Timeline.Item>
-                ))}
-              </Timeline>
-            )}
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Sender Name"
+                  placeholder="Full name"
+                  {...register('sender_name')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Sender Phone"
+                  placeholder="+1 234 567 8900"
+                  {...register('sender_phone')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12 }}>
+                <TextInput
+                  label="Sender Email"
+                  placeholder="sender@email.com"
+                  {...register('sender_email')}
+                  error={errors.sender_email?.message}
+                />
+              </Grid.Col>
+            </Grid>
           </Card>
-        </Grid.Col>
-      </Grid>
+
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconUser size={20} />
+              <Title order={4}>Receiver Information</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Receiver Name"
+                  placeholder="Full name"
+                  {...register('receiver_name')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Receiver Phone"
+                  placeholder="+1 234 567 8900"
+                  {...register('receiver_phone')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12 }}>
+                <TextInput
+                  label="Receiver Email"
+                  placeholder="receiver@email.com"
+                  {...register('receiver_email')}
+                  error={errors.receiver_email?.message}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconPackage size={20} />
+              <Title order={4}>Package Details</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <Select
+                  label="Package Type"
+                  data={PACKAGE_TYPES}
+                  value={watch('package_type')}
+                  onChange={(v) => setValue('package_type', v)}
+                  clearable
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <Select
+                  label="Shipping Method"
+                  data={SHIPPING_METHODS}
+                  value={watch('shipping_method')}
+                  onChange={(v) => setValue('shipping_method', v)}
+                  clearable
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <NumberInput
+                  label="Weight (kg)"
+                  placeholder="0.00"
+                  value={watch('weight')}
+                  onChange={(v) => setValue('weight', v)}
+                  min={0}
+                  decimalScale={2}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <TextInput
+                  label="Dimensions"
+                  placeholder="L x W x H cm"
+                  {...register('dimensions')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <NumberInput
+                  label="Declared Value ($)"
+                  placeholder="0.00"
+                  value={watch('declared_value')}
+                  onChange={(v) => setValue('declared_value', v)}
+                  min={0}
+                  decimalScale={2}
+                />
+              </Grid.Col>
+              <Grid.Col span={12}>
+                <Textarea
+                  label="Notes"
+                  placeholder="Additional notes or special instructions..."
+                  {...register('notes')}
+                  minRows={3}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          <Group justify="flex-end">
+            <Button type="submit" loading={updateMutation.isPending}>Save Changes</Button>
+          </Group>
+        </Stack>
+      </form>
+
+      <Card shadow="sm" padding="lg" radius="md" withBorder>
+        <Group justify="space-between" mb="md" wrap="wrap">
+          <Title order={4}>Tracking History</Title>
+          <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => setTrackingModal(true)}>
+            Add Update
+          </Button>
+        </Group>
+        
+        {!trackingUpdates?.length ? (
+          <Text c="dimmed" ta="center" py="md">No tracking updates yet</Text>
+        ) : (
+          <Timeline active={0} bulletSize={24} lineWidth={2}>
+            {trackingUpdates?.map((update, index) => (
+              <Timeline.Item
+                key={update.id}
+                bullet={index === 0 ? <IconTruck size={12} /> : <IconMapPin size={12} />}
+                title={update.status}
+              >
+                <Text c="dimmed" size="sm">{update.location}</Text>
+                {update.description && <Text size="sm">{update.description}</Text>}
+                <Text size="xs" mt={4} c="dimmed">
+                  {new Date(update.occurrence_time).toLocaleString()}
+                </Text>
+              </Timeline.Item>
+            ))}
+          </Timeline>
+        )}
+      </Card>
 
       <Modal opened={trackingModal} onClose={() => setTrackingModal(false)} title="Add Tracking Update">
         <form onSubmit={trackingForm.handleSubmit((data) => addTrackingMutation.mutate(data))}>

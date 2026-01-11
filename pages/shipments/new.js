@@ -3,10 +3,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { 
   Card, Title, TextInput, Select, Button, Stack, Group, 
-  Grid, Alert, Loader, Center 
+  Grid, Alert, Loader, Center, NumberInput, Textarea, Divider, Text
 } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { IconArrowLeft, IconInfoCircle } from '@tabler/icons-react'
+import { IconArrowLeft, IconInfoCircle, IconUser, IconPackage, IconTruck } from '@tabler/icons-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
@@ -18,8 +18,23 @@ const shipmentSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
   status: z.string().min(1, 'Status is required'),
   user_id: z.string().nullable(),
-  estimated_delivery: z.string().nullable(),
+  estimated_delivery: z.any().nullable(),
+  sender_name: z.string().nullable(),
+  sender_phone: z.string().nullable(),
+  sender_email: z.string().email().nullable().or(z.literal('')),
+  receiver_name: z.string().nullable(),
+  receiver_phone: z.string().nullable(),
+  receiver_email: z.string().email().nullable().or(z.literal('')),
+  weight: z.number().nullable(),
+  dimensions: z.string().nullable(),
+  package_type: z.string().nullable(),
+  shipping_method: z.string().nullable(),
+  notes: z.string().nullable(),
+  declared_value: z.number().nullable(),
 })
+
+const PACKAGE_TYPES = ['Standard', 'Fragile', 'Perishable', 'Hazardous', 'Documents', 'Electronics', 'Clothing', 'Other']
+const SHIPPING_METHODS = ['Standard', 'Express', 'Overnight', 'Economy', 'Priority', 'Freight']
 
 export default function CreateShipment() {
   const router = useRouter()
@@ -46,6 +61,18 @@ export default function CreateShipment() {
       status: 'Pending',
       user_id: null,
       estimated_delivery: null,
+      sender_name: '',
+      sender_phone: '',
+      sender_email: '',
+      receiver_name: '',
+      receiver_phone: '',
+      receiver_email: '',
+      weight: null,
+      dimensions: '',
+      package_type: 'Standard',
+      shipping_method: 'Standard',
+      notes: '',
+      declared_value: null,
     },
   })
 
@@ -56,8 +83,20 @@ export default function CreateShipment() {
         origin: data.origin,
         destination: data.destination,
         status: data.status,
-        user_id: data.user_id,
+        user_id: data.user_id || null,
         estimated_delivery: data.estimated_delivery || null,
+        sender_name: data.sender_name || null,
+        sender_phone: data.sender_phone || null,
+        sender_email: data.sender_email || null,
+        receiver_name: data.receiver_name || null,
+        receiver_phone: data.receiver_phone || null,
+        receiver_email: data.receiver_email || null,
+        weight: data.weight || null,
+        dimensions: data.dimensions || null,
+        package_type: data.package_type || null,
+        shipping_method: data.shipping_method || null,
+        notes: data.notes || null,
+        declared_value: data.declared_value || null,
       })
       if (error) throw error
     },
@@ -95,11 +134,15 @@ export default function CreateShipment() {
         </Alert>
       )}
 
-      <Card shadow="sm" padding="lg" radius="md" withBorder>
-        <form onSubmit={handleSubmit((data) => createMutation.mutate(data))}>
-          <Stack gap="md">
+      <form onSubmit={handleSubmit((data) => createMutation.mutate(data))}>
+        <Stack gap="lg">
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconTruck size={20} />
+              <Title order={4}>Shipment Details</Title>
+            </Group>
             <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Tracking Number"
                   placeholder="PKX-XXXXXX"
@@ -108,10 +151,7 @@ export default function CreateShipment() {
                   required
                 />
               </Grid.Col>
-            </Grid>
-
-            <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Select
                   label="Status"
                   data={SHIPMENT_STATUSES}
@@ -121,10 +161,7 @@ export default function CreateShipment() {
                   required
                 />
               </Grid.Col>
-            </Grid>
-
-            <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Origin"
                   placeholder="City, Country"
@@ -133,10 +170,7 @@ export default function CreateShipment() {
                   required
                 />
               </Grid.Col>
-            </Grid>
-
-            <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <TextInput
                   label="Destination"
                   placeholder="City, Country"
@@ -145,10 +179,7 @@ export default function CreateShipment() {
                   required
                 />
               </Grid.Col>
-            </Grid>
-
-            <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <Select
                   label="Assign to User"
                   placeholder="Select a user (optional)"
@@ -159,10 +190,7 @@ export default function CreateShipment() {
                   searchable
                 />
               </Grid.Col>
-            </Grid>
-
-            <Grid>
-              <Grid.Col span={12}>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
                 <DateTimePicker
                   label="Estimated Delivery"
                   placeholder="Select date and time"
@@ -172,16 +200,140 @@ export default function CreateShipment() {
                 />
               </Grid.Col>
             </Grid>
+          </Card>
 
-            <Group justify="flex-end" mt="md">
-              <Button variant="light" onClick={() => router.push('/shipments')}>Cancel</Button>
-              <Button type="submit" loading={createMutation.isPending} disabled={!supabaseConfigured}>
-                Create Shipment
-              </Button>
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconUser size={20} />
+              <Title order={4}>Sender Information</Title>
             </Group>
-          </Stack>
-        </form>
-      </Card>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Sender Name"
+                  placeholder="Full name"
+                  {...register('sender_name')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Sender Phone"
+                  placeholder="+1 234 567 8900"
+                  {...register('sender_phone')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12 }}>
+                <TextInput
+                  label="Sender Email"
+                  placeholder="sender@email.com"
+                  {...register('sender_email')}
+                  error={errors.sender_email?.message}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconUser size={20} />
+              <Title order={4}>Receiver Information</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Receiver Name"
+                  placeholder="Full name"
+                  {...register('receiver_name')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <TextInput
+                  label="Receiver Phone"
+                  placeholder="+1 234 567 8900"
+                  {...register('receiver_phone')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12 }}>
+                <TextInput
+                  label="Receiver Email"
+                  placeholder="receiver@email.com"
+                  {...register('receiver_email')}
+                  error={errors.receiver_email?.message}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group gap="xs" mb="md">
+              <IconPackage size={20} />
+              <Title order={4}>Package Details</Title>
+            </Group>
+            <Grid>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <Select
+                  label="Package Type"
+                  data={PACKAGE_TYPES}
+                  value={watch('package_type')}
+                  onChange={(v) => setValue('package_type', v)}
+                  clearable
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 6 }}>
+                <Select
+                  label="Shipping Method"
+                  data={SHIPPING_METHODS}
+                  value={watch('shipping_method')}
+                  onChange={(v) => setValue('shipping_method', v)}
+                  clearable
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <NumberInput
+                  label="Weight (kg)"
+                  placeholder="0.00"
+                  value={watch('weight')}
+                  onChange={(v) => setValue('weight', v)}
+                  min={0}
+                  decimalScale={2}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <TextInput
+                  label="Dimensions"
+                  placeholder="L x W x H cm"
+                  {...register('dimensions')}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, sm: 4 }}>
+                <NumberInput
+                  label="Declared Value ($)"
+                  placeholder="0.00"
+                  value={watch('declared_value')}
+                  onChange={(v) => setValue('declared_value', v)}
+                  min={0}
+                  decimalScale={2}
+                />
+              </Grid.Col>
+              <Grid.Col span={12}>
+                <Textarea
+                  label="Notes"
+                  placeholder="Additional notes or special instructions..."
+                  {...register('notes')}
+                  minRows={3}
+                />
+              </Grid.Col>
+            </Grid>
+          </Card>
+
+          <Group justify="flex-end">
+            <Button variant="light" onClick={() => router.push('/shipments')}>Cancel</Button>
+            <Button type="submit" loading={createMutation.isPending} disabled={!supabaseConfigured}>
+              Create Shipment
+            </Button>
+          </Group>
+        </Stack>
+      </form>
     </Stack>
   )
 }
