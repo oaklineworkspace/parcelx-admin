@@ -1,10 +1,12 @@
-import { AppShell, Group, Text, Stack, NavLink, Divider } from '@mantine/core'
+import { AppShell, Group, Text, Stack, NavLink, Divider, Burger } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
 export default function Layout({ children }) {
   const router = useRouter()
+  const [opened, { toggle, close }] = useDisclosure()
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: IconDashboard },
@@ -12,14 +14,36 @@ export default function Layout({ children }) {
     { href: '/users', label: 'Users', icon: IconUsers },
   ]
 
+  const handleNavClick = () => {
+    close()
+  }
+
   return (
     <AppShell
-      navbar={{ width: 280, breakpoint: 'sm' }}
+      header={{ height: 60 }}
+      navbar={{ 
+        width: 280, 
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened }
+      }}
       padding="md"
     >
+      <AppShell.Header>
+        <Group h="100%" px="md">
+          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Group gap="xs">
+            <IconTruckDelivery size={28} color="var(--mantine-color-blue-6)" />
+            <div>
+              <Text fw={700} size="lg">ParcelX Admin</Text>
+              <Text size="xs" c="dimmed" visibleFrom="xs">Logistics Management</Text>
+            </div>
+          </Group>
+        </Group>
+      </AppShell.Header>
+      
       <AppShell.Navbar p="md">
         <Stack gap="xs">
-          <Group gap="xs" mb="md">
+          <Group gap="xs" mb="md" visibleFrom="sm">
             <IconTruckDelivery size={28} color="var(--mantine-color-blue-6)" />
             <div>
               <Text fw={700} size="lg">ParcelX Admin</Text>
@@ -27,7 +51,7 @@ export default function Layout({ children }) {
             </div>
           </Group>
           
-          <Divider mb="md" />
+          <Divider mb="md" visibleFrom="sm" />
           
           {navItems.map((item) => (
             <NavLink
@@ -38,6 +62,7 @@ export default function Layout({ children }) {
               leftSection={<item.icon size={20} />}
               active={router.pathname === item.href || 
                 (item.href !== '/' && router.pathname.startsWith(item.href))}
+              onClick={handleNavClick}
             />
           ))}
         </Stack>
