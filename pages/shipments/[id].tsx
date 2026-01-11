@@ -19,7 +19,7 @@ const shipmentSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
   status: z.string().min(1, 'Status is required'),
   user_id: z.string().nullable(),
-  estimated_delivery: z.date().nullable(),
+  estimated_delivery: z.string().nullable(),
 })
 
 type ShipmentFormData = z.infer<typeof shipmentSchema>
@@ -91,7 +91,7 @@ export default function ShipmentDetail() {
         destination: shipment.destination,
         status: shipment.status,
         user_id: shipment.user_id,
-        estimated_delivery: shipment.estimated_delivery ? new Date(shipment.estimated_delivery) : null,
+        estimated_delivery: shipment.estimated_delivery || null,
       })
     }
   }, [shipment, reset])
@@ -104,7 +104,7 @@ export default function ShipmentDetail() {
         destination: data.destination,
         status: data.status,
         user_id: data.user_id,
-        estimated_delivery: data.estimated_delivery?.toISOString() || null,
+        estimated_delivery: data.estimated_delivery || null,
         updated_at: new Date().toISOString(),
       }).eq('id', id)
       if (error) throw error
