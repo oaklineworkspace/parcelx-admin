@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { 
   Card, Title, TextInput, Select, Button, Stack, Group, Grid, Text, 
-  Loader, Center, Badge, Timeline, Modal, Textarea, Alert, NumberInput
+  Loader, Center, Badge, Timeline, Modal, Textarea, Alert, NumberInput,
+  Image, SimpleGrid, ActionIcon, FileButton, Progress, Box
 } from '@mantine/core'
 import { DateTimePicker } from '@mantine/dates'
-import { IconArrowLeft, IconTruck, IconMapPin, IconPlus, IconInfoCircle, IconUser, IconPackage } from '@tabler/icons-react'
+import { IconArrowLeft, IconTruck, IconMapPin, IconPlus, IconInfoCircle, IconUser, IconPackage, IconPhoto, IconTrash, IconUpload } from '@tabler/icons-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
@@ -48,6 +49,10 @@ export default function ShipmentDetail() {
   const { id } = router.query
   const queryClient = useQueryClient()
   const [trackingModal, setTrackingModal] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [imageModal, setImageModal] = useState(null)
+  const resetRef = useRef(null)
 
   const supabaseConfigured = isSupabaseConfigured()
 
@@ -69,6 +74,20 @@ export default function ShipmentDetail() {
         .select('*')
         .eq('shipment_id', id)
         .order('occurrence_time', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+    enabled: supabaseConfigured && !!id,
+  })
+
+  const { data: shipmentImages, refetch: refetchImages } = useQuery({
+    queryKey: ['shipment-images', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('shipment_images')
+        .select('*')
+        .eq('shipment_id', id)
+        .order('uploaded_at', { ascending: false })
       if (error) throw error
       return data || []
     },
@@ -173,6 +192,76 @@ export default function ShipmentDetail() {
     },
     onError: (error) => {
       notifications.show({ title: 'Error', message: error.message || 'Failed to add tracking update', color: 'red' })
+    },
+  })
+
+  const handleImageUpload = async (files) => {
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    try {
+      const totalFiles = files.length
+      let uploaded = 0
+
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('shipment-images')
+          .upload(fileName, file)
+
+        if (uploadError) throw uploadError
+
+        const { data: urlData } = supabase.storage
+          .from('shipment-images')
+          .getPublicUrl(fileName)
+
+        const { error: dbError } = await supabase
+          .from('shipment_images')
+          .insert({
+            shipment_id: id,
+            image_url: urlData.publicUrl,
+            caption: file.name,
+          })
+
+        if (dbError) throw dbError
+
+        uploaded++
+        setUploadProgress((uploaded / totalFiles) * 100)
+      }
+
+      notifications.show({ title: 'Success', message: `${totalFiles} image(s) uploaded`, color: 'green' })
+      refetchImages()
+      if (resetRef.current) resetRef.current()
+    } catch (error) {
+      notifications.show({ title: 'Error', message: error.message || 'Failed to upload images', color: 'red' })
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }
+
+  const deleteImageMutation = useMutation({
+    mutationFn: async (imageId) => {
+      const image = shipmentImages?.find(img => img.id === imageId)
+      if (image) {
+        const urlParts = image.image_url.split('/shipment-images/')
+        if (urlParts[1]) {
+          await supabase.storage.from('shipment-images').remove([urlParts[1]])
+        }
+      }
+      const { error } = await supabase.from('shipment_images').delete().eq('id', imageId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      refetchImages()
+      notifications.show({ title: 'Success', message: 'Image deleted', color: 'green' })
+    },
+    onError: (error) => {
+      notifications.show({ title: 'Error', message: error.message || 'Failed to delete image', color: 'red' })
     },
   })
 
@@ -425,6 +514,74 @@ export default function ShipmentDetail() {
 
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Group justify="space-between" mb="md" wrap="wrap">
+          <Group gap="xs">
+            <IconPhoto size={20} />
+            <Title order={4}>Parcel Photos</Title>
+          </Group>
+          <FileButton
+            resetRef={resetRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            multiple
+            disabled={uploading}
+          >
+            {(props) => (
+              <Button 
+                size="xs" 
+                leftSection={<IconUpload size={14} />} 
+                loading={uploading}
+                {...props}
+              >
+                Upload Photos
+              </Button>
+            )}
+          </FileButton>
+        </Group>
+
+        {uploading && (
+          <Box mb="md">
+            <Text size="sm" mb={4}>Uploading...</Text>
+            <Progress value={uploadProgress} animated />
+          </Box>
+        )}
+        
+        {!shipmentImages?.length ? (
+          <Text c="dimmed" ta="center" py="xl">
+            No photos uploaded yet. Upload photos of the parcel to document its condition.
+          </Text>
+        ) : (
+          <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
+            {shipmentImages.map((image) => (
+              <Box key={image.id} pos="relative">
+                <Image
+                  src={image.image_url}
+                  alt={image.caption || 'Parcel photo'}
+                  radius="md"
+                  h={150}
+                  fit="cover"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setImageModal(image)}
+                />
+                <ActionIcon
+                  color="red"
+                  variant="filled"
+                  size="sm"
+                  pos="absolute"
+                  top={5}
+                  right={5}
+                  onClick={() => deleteImageMutation.mutate(image.id)}
+                  loading={deleteImageMutation.isPending}
+                >
+                  <IconTrash size={12} />
+                </ActionIcon>
+              </Box>
+            ))}
+          </SimpleGrid>
+        )}
+      </Card>
+
+      <Card shadow="sm" padding="lg" radius="md" withBorder>
+        <Group justify="space-between" mb="md" wrap="wrap">
           <Title order={4}>Tracking History</Title>
           <Button size="xs" leftSection={<IconPlus size={14} />} onClick={() => setTrackingModal(true)}>
             Add Update
@@ -480,6 +637,22 @@ export default function ShipmentDetail() {
             </Group>
           </Stack>
         </form>
+      </Modal>
+
+      <Modal 
+        opened={!!imageModal} 
+        onClose={() => setImageModal(null)} 
+        title={imageModal?.caption || 'Parcel Photo'}
+        size="lg"
+      >
+        {imageModal && (
+          <Image
+            src={imageModal.image_url}
+            alt={imageModal.caption || 'Parcel photo'}
+            radius="md"
+            fit="contain"
+          />
+        )}
       </Modal>
     </Stack>
   )
