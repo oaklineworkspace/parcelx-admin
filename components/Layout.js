@@ -1,6 +1,6 @@
 import { AppShell, Group, Text, Stack, NavLink, Divider, Burger } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin } from '@tabler/icons-react'
+import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -18,6 +18,10 @@ export default function Layout({ children }) {
     { href: '/flights', label: 'Flights', icon: IconPlane },
     { href: '/airlines', label: 'Airlines', icon: IconBuilding },
     { href: '/airports', label: 'Airports', icon: IconMapPin },
+  ]
+
+  const settingsNavItems = [
+    { href: '/crypto-wallets', label: 'Crypto Wallets', icon: IconCurrencyBitcoin },
   ]
 
   const handleNavClick = () => {
@@ -77,6 +81,22 @@ export default function Layout({ children }) {
           
           <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>Flight Management</Text>
           {flightNavItems.map((item) => (
+            <NavLink
+              key={item.href}
+              component={Link}
+              href={item.href}
+              label={item.label}
+              leftSection={<item.icon size={20} />}
+              active={router.pathname === item.href || 
+                (item.href !== '/' && router.pathname.startsWith(item.href))}
+              onClick={handleNavClick}
+            />
+          ))}
+          
+          <Divider my="md" />
+          
+          <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={4}>Settings</Text>
+          {settingsNavItems.map((item) => (
             <NavLink
               key={item.href}
               component={Link}

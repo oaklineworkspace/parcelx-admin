@@ -29,8 +29,10 @@ pages/
 │   └── [id].js             # Flight details/edit
 ├── airlines/
 │   └── index.js            # Airlines management
-└── airports/
-    └── index.js            # Airports management
+├── airports/
+│   └── index.js            # Airports management
+└── crypto-wallets/
+    └── index.js            # Crypto wallets management
 components/
 ├── Layout.js               # App layout with sidebar navigation
 └── AdminAuth.js            # Admin password protection
@@ -57,6 +59,12 @@ lib/
 - **Users Management**: Profile list with search, shipment count display
 - **User Details**: Profile editing, associated shipments view
 
+### Crypto Wallets
+- **Wallet Management**: Add, edit, delete crypto wallet addresses
+- **Supported Networks**: ERC20, TRC20, BEP20, BTC, SOL, Polygon, and more
+- **Wallet Details**: Crypto name, symbol, network type, wallet address, confirmations, display order
+- **Quick Presets**: Fast selection for common cryptocurrencies (BTC, ETH, USDT, etc.)
+
 ### General
 - **Admin Password Protection**: All pages require password authentication
 - **Dashboard**: Statistics cards, delivery performance chart, recent shipments, status overview
@@ -72,6 +80,7 @@ lib/
 - **airports**: Airport information with coordinates
 - **flight_bookings**: User flight bookings
 - **flight_passengers**: Passenger details for bookings
+- **crypto_wallets**: Crypto wallet addresses for payments
 
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
@@ -86,6 +95,7 @@ npm run start  # Start production server
 ```
 
 ## Recent Changes
+- **2026-01-13**: Added crypto wallets management page
 - **2026-01-13**: Added flight management system (flights, airlines, airports pages)
 - **2026-01-13**: Added item name, quantity, category, customs/insurance fields to shipments
 - **2026-01-13**: Added parcel photo upload functionality
