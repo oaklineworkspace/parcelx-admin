@@ -1,7 +1,7 @@
 # ParcelX Admin Dashboard
 
 ## Overview
-A comprehensive admin dashboard for ParcelX logistics system built with Next.js and Mantine UI. The dashboard manages shipments and user profiles with full CRUD operations, status tracking, and real-time data display. Protected by admin password authentication.
+A comprehensive admin dashboard for ParcelX logistics system built with Next.js and Mantine UI. The dashboard manages shipments, user profiles, and flight operations with full CRUD operations, status tracking, and real-time data display. Protected by admin password authentication.
 
 ## Technology Stack
 - **Framework**: Next.js 14 (Pages Router)
@@ -19,31 +19,59 @@ pages/
 ├── shipments/
 │   ├── index.js            # Shipment list
 │   ├── new.js              # Create shipment
-│   └── [id].js             # Shipment details
-└── users/
-    ├── index.js            # User profiles list
-    └── [id].js             # User profile details
+│   └── [id].js             # Shipment details with image upload
+├── users/
+│   ├── index.js            # User profiles list
+│   └── [id].js             # User profile details
+├── flights/
+│   ├── index.js            # Flights list with search/filter
+│   ├── new.js              # Create flight
+│   └── [id].js             # Flight details/edit
+├── airlines/
+│   └── index.js            # Airlines management
+└── airports/
+    └── index.js            # Airports management
 components/
-├── Layout.js               # App layout with sidebar
+├── Layout.js               # App layout with sidebar navigation
 └── AdminAuth.js            # Admin password protection
 lib/
-└── supabase.js             # Supabase client
+└── supabase.js             # Supabase client and constants
 ```
 
 ## Features
-- **Admin Password Protection**: All pages require password authentication
-- **Dashboard**: Statistics cards, delivery performance chart, recent shipments, status overview
+
+### Shipments
 - **Shipments Management**: List view with search/filter, pagination, status updates, delete functionality
 - **Shipment Creation**: Auto-generated tracking numbers, user assignment, estimated delivery
 - **Shipment Details**: Edit form, tracking history timeline, add tracking updates
+- **Parcel Photos**: Upload, view, and delete parcel images
+- **Extended Fields**: Item name, quantity, category, customs info, insurance
+
+### Flight Management
+- **Flights**: List with search, filter by airline/status, pagination, action buttons (view, edit, duplicate, activate/deactivate, delete)
+- **Flight Details**: Flight number, airline, airports, schedule, pricing per cabin class, amenities, operating days
+- **Airlines**: CRUD operations for airline management (code, name, country, logo)
+- **Airports**: CRUD operations for airport management (code, name, city, country, timezone, coordinates)
+
+### Users
 - **Users Management**: Profile list with search, shipment count display
 - **User Details**: Profile editing, associated shipments view
+
+### General
+- **Admin Password Protection**: All pages require password authentication
+- **Dashboard**: Statistics cards, delivery performance chart, recent shipments, status overview
 - **Mobile Responsive**: All pages optimized for portrait/mobile screens
 
 ## Database Schema (Supabase)
 - **profiles**: User profiles (id, email, full_name, country, phone, etc.)
-- **shipments**: Shipments (tracking_number, status, origin, destination, estimated_delivery)
-- **tracking_updates**: Tracking events (shipment_id, location, description, status, occurrence_time)
+- **shipments**: Shipments with sender/receiver info, item details, customs, insurance
+- **shipment_images**: Photos attached to shipments
+- **tracking_updates**: Tracking events for shipments
+- **flights**: Flight schedules with pricing and amenities
+- **airlines**: Airline information
+- **airports**: Airport information with coordinates
+- **flight_bookings**: User flight bookings
+- **flight_passengers**: Passenger details for bookings
 
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
@@ -58,9 +86,9 @@ npm run start  # Start production server
 ```
 
 ## Recent Changes
-- **2026-01-11**: Converted from TypeScript to JavaScript (.js files)
-- **2026-01-11**: Added admin password protection for all pages
-- **2026-01-11**: Improved mobile/portrait responsive layout
+- **2026-01-13**: Added flight management system (flights, airlines, airports pages)
+- **2026-01-13**: Added item name, quantity, category, customs/insurance fields to shipments
+- **2026-01-13**: Added parcel photo upload functionality
+- **2026-01-11**: Converted from TypeScript to JavaScript
+- **2026-01-11**: Added admin password protection
 - **2026-01-11**: Migrated from Vite to Next.js with pages router
-- Implemented Dashboard, Shipments, Users pages with full CRUD
-- Integrated Supabase for data persistence
