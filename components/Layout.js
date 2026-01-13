@@ -51,7 +51,7 @@ export default function Layout({ children }) {
         </Group>
       </AppShell.Header>
       
-      <AppShell.Navbar p="md">
+      <AppShell.Navbar p="md" style={{ overflowY: 'auto' }}>
         <Stack gap="xs">
           <Group gap="xs" mb="md" visibleFrom="sm">
             <IconTruckDelivery size={28} color="var(--mantine-color-blue-6)" />
