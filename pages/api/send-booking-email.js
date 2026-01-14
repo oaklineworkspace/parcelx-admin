@@ -49,7 +49,7 @@ const EMAIL_TEMPLATES = {
             </table>
           </div>
           
-          <p>Please keep this email for your records. You will receive your e-ticket shortly.</p>
+          <p>Please keep this email for your records.</p>
           <p>Thank you for choosing ParcelX Flights!</p>
           
           <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
