@@ -1,6 +1,6 @@
 import { AppShell, Group, Text, Stack, NavLink, Divider, Burger, Button } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin, IconTicket, IconLogout } from '@tabler/icons-react'
+import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin, IconTicket, IconLogout, IconShield } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useAdmin } from './AdminAuth'
@@ -25,6 +25,7 @@ export default function Layout({ children }) {
 
   const settingsNavItems = [
     { href: '/crypto-wallets', label: 'Crypto Wallets', icon: IconCurrencyBitcoin },
+    { href: '/admins', label: 'Admin Users', icon: IconShield },
   ]
 
   const handleNavClick = () => {

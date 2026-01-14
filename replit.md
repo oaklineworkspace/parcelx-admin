@@ -34,8 +34,10 @@ pages/
 ├── bookings/
 │   ├── index.js            # Flight bookings list
 │   └── [id].js             # Booking details with passengers
-└── crypto-wallets/
-    └── index.js            # Crypto wallets management
+├── crypto-wallets/
+│   └── index.js            # Crypto wallets management
+└── admins/
+    └── index.js            # Admin user management
 components/
 ├── Layout.js               # App layout with sidebar navigation
 └── AdminAuth.js            # Admin password protection
@@ -77,6 +79,7 @@ lib/
 
 ### General
 - **Admin Authentication**: Supabase Auth login with admin_profiles table verification
+- **Admin Management**: Add/remove admin users, activate/deactivate, role assignment
 - **Dashboard**: Statistics cards, delivery performance chart, recent shipments, status overview
 - **Mobile Responsive**: All pages optimized for portrait/mobile screens
 
