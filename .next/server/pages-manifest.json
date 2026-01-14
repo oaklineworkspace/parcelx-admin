@@ -2,5 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/": "pages/index.js",
+  "/bookings": "pages/bookings.js",
+  "/bookings/[id]": "pages/bookings/[id].js",
+  "/api/send-booking-email": "pages/api/send-booking-email.js"
 }
