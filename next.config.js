@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  devIndicators: {
+    buildActivity: false,
+  },
   async headers() {
     return [
       {
@@ -12,7 +15,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://*.replit.dev https://*.replit.com;",
+            value: "frame-ancestors 'self' https://*.replit.dev https://*.replit.com https://replit.com;",
           },
         ],
       },
