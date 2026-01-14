@@ -36,27 +36,12 @@ export default function BookingDetail() {
   const [proofModal, setProofModal] = useState(false)
   const [adminNotes, setAdminNotes] = useState('')
 
-  const { data: booking, isLoading } = useQuery({
+  const { data: booking, isLoading, error: bookingError } = useQuery({
     queryKey: ['booking', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('flight_bookings')
-        .select(`
-          *,
-          user:profiles(id, email, full_name, first_name, last_name, phone_number, country),
-          outbound_flight:flights!flight_bookings_outbound_flight_id_fkey(
-            id, flight_number, departure_time, arrival_time, duration_minutes, aircraft_type,
-            airline:airlines(code, name),
-            departure:airports!flights_departure_airport_id_fkey(code, name, city, country),
-            arrival:airports!flights_arrival_airport_id_fkey(code, name, city, country)
-          ),
-          return_flight:flights!flight_bookings_return_flight_id_fkey(
-            id, flight_number, departure_time, arrival_time, duration_minutes, aircraft_type,
-            airline:airlines(code, name),
-            departure:airports!flights_departure_airport_id_fkey(code, name, city, country),
-            arrival:airports!flights_arrival_airport_id_fkey(code, name, city, country)
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single()
       if (error) throw error
@@ -98,14 +83,7 @@ export default function BookingDetail() {
   })
 
   const getUserName = () => {
-    if (booking?.user?.full_name) return booking.user.full_name
-    if (booking?.user?.first_name) return `${booking.user.first_name} ${booking.user.last_name || ''}`
     return booking?.contact_email || 'Unknown'
-  }
-
-  const formatTime = (time) => {
-    if (!time) return '-'
-    return time.substring(0, 5)
   }
 
   if (isLoading && supabaseConfigured) {
@@ -137,6 +115,11 @@ export default function BookingDetail() {
           </Button>
           <Title order={2}>Booking Not Found</Title>
         </Group>
+        {bookingError && (
+          <Alert icon={<IconInfoCircle size={16} />} title="Error" color="red">
+            {bookingError.message}
+          </Alert>
+        )}
       </Stack>
     )
   }
@@ -192,60 +175,45 @@ export default function BookingDetail() {
             <Card shadow="sm" padding="lg" radius="md" withBorder>
               <Group gap="xs" mb="md">
                 <IconPlane size={20} />
-                <Title order={4}>Flight Details</Title>
+                <Title order={4}>Booking Details</Title>
               </Group>
               
-              {booking.outbound_flight && (
-                <Card withBorder p="md" mb="md">
-                  <Group justify="space-between" mb="sm">
-                    <Badge variant="light">Outbound Flight</Badge>
-                    <Text size="sm" c="dimmed">{dayjs(booking.departure_date).format('ddd, MMM D, YYYY')}</Text>
+              <Stack gap="sm">
+                <Group justify="space-between">
+                  <Text c="dimmed">Trip Type</Text>
+                  <Badge variant="light">{booking.trip_type === 'roundtrip' ? 'Round Trip' : 'One Way'}</Badge>
+                </Group>
+                <Group justify="space-between">
+                  <Text c="dimmed">Departure Date</Text>
+                  <Text fw={500}>{dayjs(booking.departure_date).format('ddd, MMM D, YYYY')}</Text>
+                </Group>
+                {booking.return_date && (
+                  <Group justify="space-between">
+                    <Text c="dimmed">Return Date</Text>
+                    <Text fw={500}>{dayjs(booking.return_date).format('ddd, MMM D, YYYY')}</Text>
                   </Group>
-                  <Group justify="space-between" align="flex-start">
-                    <div>
-                      <Text size="xl" fw={700}>{booking.outbound_flight.departure?.code}</Text>
-                      <Text size="sm">{booking.outbound_flight.departure?.city}</Text>
-                      <Text size="sm" c="dimmed">{formatTime(booking.outbound_flight.departure_time)}</Text>
-                    </div>
-                    <Stack align="center" gap={4}>
-                      <Text size="xs" c="dimmed">{booking.outbound_flight.airline?.code} {booking.outbound_flight.flight_number}</Text>
-                      <IconPlane size={20} />
-                      <Text size="xs" c="dimmed">{Math.floor(booking.outbound_flight.duration_minutes / 60)}h {booking.outbound_flight.duration_minutes % 60}m</Text>
-                    </Stack>
-                    <div style={{ textAlign: 'right' }}>
-                      <Text size="xl" fw={700}>{booking.outbound_flight.arrival?.code}</Text>
-                      <Text size="sm">{booking.outbound_flight.arrival?.city}</Text>
-                      <Text size="sm" c="dimmed">{formatTime(booking.outbound_flight.arrival_time)}</Text>
-                    </div>
+                )}
+                <Group justify="space-between">
+                  <Text c="dimmed">Cabin Class</Text>
+                  <Badge variant="outline">{booking.cabin_class}</Badge>
+                </Group>
+                <Group justify="space-between">
+                  <Text c="dimmed">Total Passengers</Text>
+                  <Text fw={500}>{booking.total_passengers}</Text>
+                </Group>
+                {booking.outbound_flight_id && (
+                  <Group justify="space-between">
+                    <Text c="dimmed">Outbound Flight ID</Text>
+                    <Text size="sm" ff="monospace">{booking.outbound_flight_id}</Text>
                   </Group>
-                </Card>
-              )}
-
-              {booking.return_flight && (
-                <Card withBorder p="md">
-                  <Group justify="space-between" mb="sm">
-                    <Badge variant="light" color="orange">Return Flight</Badge>
-                    <Text size="sm" c="dimmed">{dayjs(booking.return_date).format('ddd, MMM D, YYYY')}</Text>
+                )}
+                {booking.return_flight_id && (
+                  <Group justify="space-between">
+                    <Text c="dimmed">Return Flight ID</Text>
+                    <Text size="sm" ff="monospace">{booking.return_flight_id}</Text>
                   </Group>
-                  <Group justify="space-between" align="flex-start">
-                    <div>
-                      <Text size="xl" fw={700}>{booking.return_flight.departure?.code}</Text>
-                      <Text size="sm">{booking.return_flight.departure?.city}</Text>
-                      <Text size="sm" c="dimmed">{formatTime(booking.return_flight.departure_time)}</Text>
-                    </div>
-                    <Stack align="center" gap={4}>
-                      <Text size="xs" c="dimmed">{booking.return_flight.airline?.code} {booking.return_flight.flight_number}</Text>
-                      <IconPlane size={20} />
-                      <Text size="xs" c="dimmed">{Math.floor(booking.return_flight.duration_minutes / 60)}h {booking.return_flight.duration_minutes % 60}m</Text>
-                    </Stack>
-                    <div style={{ textAlign: 'right' }}>
-                      <Text size="xl" fw={700}>{booking.return_flight.arrival?.code}</Text>
-                      <Text size="sm">{booking.return_flight.arrival?.city}</Text>
-                      <Text size="sm" c="dimmed">{formatTime(booking.return_flight.arrival_time)}</Text>
-                    </div>
-                  </Group>
-                </Card>
-              )}
+                )}
+              </Stack>
             </Card>
 
             <Card shadow="sm" padding="lg" radius="md" withBorder>
