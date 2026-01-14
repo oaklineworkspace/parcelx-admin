@@ -1,14 +1,46 @@
 import nodemailer from 'nodemailer'
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+const getTransporter = () => {
+  if (process.env.SMTP_HOST) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
+  }
+  return null
+}
+
+const sendWithBrevo = async (to, subject, html) => {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: {
+        name: process.env.BREVO_SENDER_NAME || 'ParcelX Flights',
+        email: process.env.BREVO_SENDER,
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  })
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Brevo API error')
+  }
+  
+  return response.json()
+}
 
 const EMAIL_TEMPLATES = {
   booking_confirmed: {
@@ -339,12 +371,20 @@ export default async function handler(req, res) {
   const html = replaceTemplateVars(template.html, templateData)
 
   try {
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM_FLIGHTS || process.env.SMTP_USER,
-      to,
-      subject,
-      html,
-    })
+    const transporter = getTransporter()
+    
+    if (transporter) {
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM_FLIGHTS || process.env.SMTP_USER,
+        to,
+        subject,
+        html,
+      })
+    } else if (process.env.BREVO_API_KEY) {
+      await sendWithBrevo(to, subject, html)
+    } else {
+      return res.status(500).json({ error: 'No email provider configured' })
+    }
 
     return res.status(200).json({ success: true, message: 'Email sent successfully' })
   } catch (error) {

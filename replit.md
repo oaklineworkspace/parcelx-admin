@@ -99,11 +99,18 @@ lib/
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous/public key
+
+### Email (SMTP - Replit)
 - `SMTP_HOST`: SMTP server host (e.g., smtp.zoho.com)
 - `SMTP_PORT`: SMTP server port (587 or 465)
 - `SMTP_USER`: SMTP username/email
 - `SMTP_PASS`: SMTP password
 - `SMTP_FROM_FLIGHTS`: From email address for flight booking notifications
+
+### Email (Brevo - Vercel)
+- `BREVO_API_KEY`: Brevo API key
+- `BREVO_SENDER`: Sender email address
+- `BREVO_SENDER_NAME`: Sender display name
 
 ## Development
 ```bash
