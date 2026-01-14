@@ -441,21 +441,73 @@ export default function BookingDetail() {
         opened={proofModal} 
         onClose={() => setProofModal(false)}
         title="Payment Proof"
-        size="lg"
+        size="xl"
       >
         <Stack gap="md">
+          <Grid>
+            <Grid.Col span={6}>
+              <Text size="sm" c="dimmed">Booking Reference</Text>
+              <Text fw={500}>{booking.booking_reference}</Text>
+            </Grid.Col>
+            <Grid.Col span={6}>
+              <Text size="sm" c="dimmed">Amount</Text>
+              <Text fw={500}>${Number(booking.total_price).toFixed(2)}</Text>
+            </Grid.Col>
+          </Grid>
+          
+          {booking.payment_crypto_name && (
+            <Grid>
+              <Grid.Col span={4}>
+                <Text size="sm" c="dimmed">Crypto</Text>
+                <Text>{booking.payment_crypto_name} ({booking.payment_crypto_symbol})</Text>
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Text size="sm" c="dimmed">Network</Text>
+                <Text>{booking.payment_network_type}</Text>
+              </Grid.Col>
+              {booking.payment_amount_crypto && (
+                <Grid.Col span={4}>
+                  <Text size="sm" c="dimmed">Crypto Amount</Text>
+                  <Text>{booking.payment_amount_crypto} {booking.payment_crypto_symbol}</Text>
+                </Grid.Col>
+              )}
+            </Grid>
+          )}
+
           {booking.payment_submitted_at && (
             <Text size="sm" c="dimmed">
               Submitted: {dayjs(booking.payment_submitted_at).format('MMM D, YYYY h:mm A')}
             </Text>
           )}
-          <Image
-            src={booking.payment_proof_url}
-            alt="Payment Proof"
-            radius="md"
-            fit="contain"
-            mah={500}
-          />
+
+          <Divider />
+
+          {booking.payment_proof_url ? (
+            <>
+              <Image
+                src={booking.payment_proof_url}
+                alt="Payment Proof"
+                radius="md"
+                fit="contain"
+                mah={400}
+                fallbackSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f0f0f0' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999'%3EImage%3C/text%3E%3C/svg%3E"
+              />
+              <Button 
+                variant="subtle" 
+                component="a" 
+                href={booking.payment_proof_url} 
+                target="_blank"
+                fullWidth
+              >
+                Open Image in New Tab
+              </Button>
+            </>
+          ) : (
+            <Text c="dimmed" ta="center" py="xl">No payment proof uploaded</Text>
+          )}
+
+          <Divider />
+
           <Group justify="flex-end">
             <Button 
               color="red" 
