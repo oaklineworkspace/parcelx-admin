@@ -1,6 +1,6 @@
 import { AppShell, Group, Text, Stack, NavLink, Divider, Burger } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin } from '@tabler/icons-react'
+import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin, IconTicket } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -16,6 +16,7 @@ export default function Layout({ children }) {
 
   const flightNavItems = [
     { href: '/flights', label: 'Flights', icon: IconPlane },
+    { href: '/bookings', label: 'Bookings', icon: IconTicket },
     { href: '/airlines', label: 'Airlines', icon: IconBuilding },
     { href: '/airports', label: 'Airports', icon: IconMapPin },
   ]

@@ -31,6 +31,9 @@ pages/
 │   └── index.js            # Airlines management
 ├── airports/
 │   └── index.js            # Airports management
+├── bookings/
+│   ├── index.js            # Flight bookings list
+│   └── [id].js             # Booking details with passengers
 └── crypto-wallets/
     └── index.js            # Crypto wallets management
 components/
@@ -58,6 +61,13 @@ lib/
 ### Users
 - **Users Management**: Profile list with search, shipment count display
 - **User Details**: Profile editing, associated shipments view
+
+### Flight Bookings
+- **Bookings List**: View all flight bookings with search, filter by status/payment
+- **Booking Details**: Full booking info with flight details, passengers list
+- **Payment Proof**: View uploaded payment screenshots, approve/reject payments
+- **Status Management**: Confirm, cancel bookings, update payment status
+- **Passenger Info**: View passenger details including passport, DOB, contact info
 
 ### Crypto Wallets
 - **Wallet Management**: Add, edit, delete crypto wallet addresses
@@ -95,6 +105,7 @@ npm run start  # Start production server
 ```
 
 ## Recent Changes
+- **2026-01-14**: Added flight bookings management with passengers and payment proof viewing
 - **2026-01-13**: Added crypto wallets management page
 - **2026-01-13**: Added flight management system (flights, airlines, airports pages)
 - **2026-01-13**: Added item name, quantity, category, customs/insurance fields to shipments
