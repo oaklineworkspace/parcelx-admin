@@ -44,7 +44,7 @@ const EMAIL_TEMPLATES = {
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Total Amount:</td>
-                <td style="padding: 8px 0; font-weight: bold; color: #059669;">${total_price}</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #059669;">$` + `{total_price}</td>
               </tr>
             </table>
           </div>
@@ -83,7 +83,7 @@ const EMAIL_TEMPLATES = {
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Amount Paid:</td>
-                <td style="padding: 8px 0; font-weight: bold; color: #059669;">${total_price}</td>
+                <td style="padding: 8px 0; font-weight: bold; color: #059669;">$` + `{total_price}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Payment Method:</td>
@@ -167,7 +167,7 @@ const EMAIL_TEMPLATES = {
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Amount Due:</td>
-                <td style="padding: 8px 0; font-weight: bold;">${total_price}</td>
+                <td style="padding: 8px 0; font-weight: bold;">$` + `{total_price}</td>
               </tr>
             </table>
           </div>
