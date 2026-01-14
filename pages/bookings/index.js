@@ -41,27 +41,12 @@ export default function BookingsList() {
 
   const supabaseConfigured = isSupabaseConfigured()
 
-  const { data: bookingsData, isLoading } = useQuery({
+  const { data: bookingsData, isLoading, error: queryError } = useQuery({
     queryKey: ['bookings', search, statusFilter, paymentFilter, page],
     queryFn: async () => {
       let query = supabase
         .from('flight_bookings')
-        .select(`
-          *,
-          user:profiles(id, email, full_name, first_name, last_name),
-          outbound_flight:flights!flight_bookings_outbound_flight_id_fkey(
-            id, flight_number,
-            airline:airlines(code, name),
-            departure:airports!flights_departure_airport_id_fkey(code, city),
-            arrival:airports!flights_arrival_airport_id_fkey(code, city)
-          ),
-          return_flight:flights!flight_bookings_return_flight_id_fkey(
-            id, flight_number,
-            airline:airlines(code, name),
-            departure:airports!flights_departure_airport_id_fkey(code, city),
-            arrival:airports!flights_arrival_airport_id_fkey(code, city)
-          )
-        `, { count: 'exact' })
+        .select('*', { count: 'exact' })
 
       if (search) {
         query = query.or(`booking_reference.ilike.%${search}%,contact_email.ilike.%${search}%,contact_phone.ilike.%${search}%`)
@@ -80,7 +65,10 @@ export default function BookingsList() {
         .order('created_at', { ascending: false })
         .range(from, to)
 
-      if (error) throw error
+      if (error) {
+        console.error('Bookings query error:', error)
+        throw error
+      }
       return { bookings: data || [], total: count || 0 }
     },
     enabled: supabaseConfigured,
@@ -131,14 +119,7 @@ export default function BookingsList() {
   })
 
   const getUserName = (booking) => {
-    if (booking.user?.full_name) return booking.user.full_name
-    if (booking.user?.first_name) return `${booking.user.first_name} ${booking.user.last_name || ''}`
     return booking.contact_email || 'Unknown'
-  }
-
-  const getFlightRoute = (flight) => {
-    if (!flight) return '-'
-    return `${flight.departure?.code || '?'} → ${flight.arrival?.code || '?'}`
   }
 
   return (
@@ -154,6 +135,12 @@ export default function BookingsList() {
       {!supabaseConfigured && (
         <Alert icon={<IconInfoCircle size={16} />} title="Supabase Not Configured" color="blue">
           Configure Supabase environment variables to manage bookings.
+        </Alert>
+      )}
+
+      {queryError && (
+        <Alert icon={<IconInfoCircle size={16} />} title="Query Error" color="red">
+          {queryError.message}
         </Alert>
       )}
 
@@ -211,7 +198,7 @@ export default function BookingsList() {
                   <Table.Tr>
                     <Table.Th>Reference</Table.Th>
                     <Table.Th>Customer</Table.Th>
-                    <Table.Th>Route</Table.Th>
+                    <Table.Th>Trip</Table.Th>
                     <Table.Th>Date</Table.Th>
                     <Table.Th>Class</Table.Th>
                     <Table.Th>Total</Table.Th>
@@ -245,12 +232,9 @@ export default function BookingsList() {
                       <Table.Td>
                         <Group gap={4}>
                           <IconPlane size={14} />
-                          <div>
-                            <Text size="sm">{getFlightRoute(booking.outbound_flight)}</Text>
-                            {booking.return_flight && (
-                              <Text size="xs" c="dimmed">{getFlightRoute(booking.return_flight)} (return)</Text>
-                            )}
-                          </div>
+                          <Badge variant="outline" size="sm">
+                            {booking.trip_type === 'roundtrip' ? 'Round Trip' : 'One Way'}
+                          </Badge>
                         </Group>
                       </Table.Td>
                       <Table.Td>
