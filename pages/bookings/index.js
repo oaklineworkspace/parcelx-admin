@@ -204,6 +204,7 @@ export default function BookingsList() {
                     <Table.Th>Total</Table.Th>
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Payment</Table.Th>
+                    <Table.Th>Proof</Table.Th>
                     <Table.Th>Actions</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
@@ -257,21 +258,24 @@ export default function BookingsList() {
                         </Badge>
                       </Table.Td>
                       <Table.Td>
-                        <Group gap="xs">
-                          <Badge color={PAYMENT_STATUS_COLORS[booking.payment_status] || 'gray'}>
-                            {booking.payment_status}
-                          </Badge>
-                          {booking.payment_proof_url && (
-                            <ActionIcon 
-                              size="sm" 
-                              variant="subtle" 
-                              color="blue"
-                              onClick={() => setProofModal({ open: true, url: booking.payment_proof_url, booking })}
-                            >
-                              <IconPhoto size={14} />
-                            </ActionIcon>
-                          )}
-                        </Group>
+                        <Badge color={PAYMENT_STATUS_COLORS[booking.payment_status] || 'gray'}>
+                          {booking.payment_status}
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td>
+                        {booking.payment_proof_url ? (
+                          <Button 
+                            size="xs" 
+                            variant="filled"
+                            color="blue"
+                            leftSection={<IconPhoto size={14} />}
+                            onClick={() => setProofModal({ open: true, url: booking.payment_proof_url, booking })}
+                          >
+                            View
+                          </Button>
+                        ) : (
+                          <Text size="xs" c="dimmed">None</Text>
+                        )}
                       </Table.Td>
                       <Table.Td>
                         <Menu shadow="md" width={200}>
