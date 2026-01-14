@@ -1,12 +1,14 @@
-import { AppShell, Group, Text, Stack, NavLink, Divider, Burger } from '@mantine/core'
+import { AppShell, Group, Text, Stack, NavLink, Divider, Burger, Button } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
-import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin, IconTicket } from '@tabler/icons-react'
+import { IconDashboard, IconPackage, IconUsers, IconTruckDelivery, IconPlane, IconBuilding, IconMapPin, IconCurrencyBitcoin, IconTicket, IconLogout } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { useAdmin } from './AdminAuth'
 
 export default function Layout({ children }) {
   const router = useRouter()
   const [opened, { toggle, close }] = useDisclosure()
+  const { adminUser, handleLogout } = useAdmin()
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: IconDashboard },
@@ -40,14 +42,31 @@ export default function Layout({ children }) {
       padding="md"
     >
       <AppShell.Header>
-        <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Group gap="xs">
-            <IconTruckDelivery size={28} color="var(--mantine-color-blue-6)" />
-            <div>
-              <Text fw={700} size="lg">ParcelX Admin</Text>
-              <Text size="xs" c="dimmed" visibleFrom="xs">Logistics Management</Text>
-            </div>
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Group gap="xs">
+              <IconTruckDelivery size={28} color="var(--mantine-color-blue-6)" />
+              <div>
+                <Text fw={700} size="lg">ParcelX Admin</Text>
+                <Text size="xs" c="dimmed" visibleFrom="xs">Logistics Management</Text>
+              </div>
+            </Group>
+          </Group>
+          <Group>
+            {adminUser && (
+              <>
+                <Text size="sm" c="dimmed" visibleFrom="sm">{adminUser.email}</Text>
+                <Button 
+                  variant="subtle" 
+                  size="compact-sm" 
+                  leftSection={<IconLogout size={16} />}
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </>
+            )}
           </Group>
         </Group>
       </AppShell.Header>

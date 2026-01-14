@@ -76,7 +76,7 @@ lib/
 - **Quick Presets**: Fast selection for common cryptocurrencies (BTC, ETH, USDT, etc.)
 
 ### General
-- **Admin Password Protection**: All pages require password authentication
+- **Admin Authentication**: Supabase Auth login with admin_profiles table verification
 - **Dashboard**: Statistics cards, delivery performance chart, recent shipments, status overview
 - **Mobile Responsive**: All pages optimized for portrait/mobile screens
 
@@ -95,7 +95,6 @@ lib/
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous/public key
-- `NEXT_PUBLIC_ADMIN_PASSWORD`: Admin password (default: admin123)
 
 ## Development
 ```bash
@@ -105,6 +104,7 @@ npm run start  # Start production server
 ```
 
 ## Recent Changes
+- **2026-01-14**: Updated authentication to use Supabase Auth with admin_profiles table
 - **2026-01-14**: Added flight bookings management with passengers and payment proof viewing
 - **2026-01-13**: Added crypto wallets management page
 - **2026-01-13**: Added flight management system (flights, airlines, airports pages)
