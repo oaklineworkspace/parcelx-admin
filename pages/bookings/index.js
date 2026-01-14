@@ -157,15 +157,29 @@ export default function BookingsList() {
     mutationFn: async ({ id, status, booking }) => {
       const updateData = { status, updated_at: new Date().toISOString() }
       
-      if (status === 'confirmed' && !booking.eticket_number) {
-        updateData.eticket_number = generateETicketNumber()
-      }
-      
       const { error } = await supabase
         .from('flight_bookings')
         .update(updateData)
         .eq('id', id)
       if (error) throw error
+      
+      if (status === 'confirmed') {
+        const { data: passengers } = await supabase
+          .from('flight_passengers')
+          .select('id, eticket_number')
+          .eq('booking_id', id)
+        
+        if (passengers) {
+          for (const passenger of passengers) {
+            if (!passenger.eticket_number) {
+              await supabase
+                .from('flight_passengers')
+                .update({ eticket_number: generateETicketNumber() })
+                .eq('id', passenger.id)
+            }
+          }
+        }
+      }
       
       const fullBooking = await fetchBookingDetails(id)
       return { status, booking: fullBooking || { ...booking, ...updateData } }

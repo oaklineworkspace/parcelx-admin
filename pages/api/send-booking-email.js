@@ -28,8 +28,8 @@ const EMAIL_TEMPLATES = {
                 <td style="padding: 8px 0; font-weight: bold; font-size: 16px;">{booking_reference}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #6b7280;">E-Ticket Number:</td>
-                <td style="padding: 8px 0; font-weight: bold; color: #2563eb; font-size: 16px;">{eticket_number}</td>
+                <td style="padding: 8px 0; color: #6b7280;">Passengers:</td>
+                <td style="padding: 8px 0; font-weight: bold;">{total_passengers}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280;">Booking Status:</td>
@@ -289,12 +289,20 @@ export default async function handler(req, res) {
   const passengers = booking.passengers || []
   const passengersHtml = passengers.length > 0 
     ? passengers.map((p, i) => `
-        <div style="padding: 10px 0; ${i > 0 ? 'border-top: 1px solid #e5e7eb;' : ''}">
-          <p style="margin: 0; font-weight: bold;">${p.title || ''} ${p.first_name} ${p.last_name}</p>
-          <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">
-            ${p.passenger_type?.charAt(0).toUpperCase() + p.passenger_type?.slice(1) || 'Adult'}
-            ${p.passport_number ? ' • Passport: ' + p.passport_number : ''}
-          </p>
+        <div style="padding: 15px; ${i > 0 ? 'border-top: 1px solid #e5e7eb;' : ''} background: ${i % 2 === 0 ? '#f9fafb' : '#fff'}; border-radius: 6px; margin-bottom: 5px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p style="margin: 0; font-weight: bold; font-size: 16px;">${p.title || ''} ${p.first_name} ${p.last_name}</p>
+              <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">
+                ${p.passenger_type?.charAt(0).toUpperCase() + p.passenger_type?.slice(1) || 'Adult'}
+                ${p.passport_number ? ' • Passport: ' + p.passport_number : ''}
+              </p>
+            </div>
+            <div style="text-align: right;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px;">E-Ticket</p>
+              <p style="margin: 0; font-weight: bold; color: #2563eb; font-size: 14px;">${p.eticket_number || 'Pending'}</p>
+            </div>
+          </div>
         </div>
       `).join('')
     : '<p style="color: #6b7280;">No passenger details available</p>'
