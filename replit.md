@@ -70,6 +70,7 @@ lib/
 - **Payment Proof**: View uploaded payment screenshots, approve/reject payments
 - **Status Management**: Confirm, cancel bookings, update payment status
 - **Passenger Info**: View passenger details including passport, DOB, contact info
+- **Email Notifications**: Automatic emails sent to customers when booking/payment status changes
 
 ### Crypto Wallets
 - **Wallet Management**: Add, edit, delete crypto wallet addresses
@@ -98,6 +99,11 @@ lib/
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous/public key
+- `SMTP_HOST`: SMTP server host (e.g., smtp.zoho.com)
+- `SMTP_PORT`: SMTP server port (587 or 465)
+- `SMTP_USER`: SMTP username/email
+- `SMTP_PASS`: SMTP password
+- `SMTP_FROM_FLIGHTS`: From email address for flight booking notifications
 
 ## Development
 ```bash
@@ -107,6 +113,7 @@ npm run start  # Start production server
 ```
 
 ## Recent Changes
+- **2026-01-14**: Added email notifications for booking/payment status changes via Zoho SMTP
 - **2026-01-14**: Updated authentication to use Supabase Auth with admin_profiles table
 - **2026-01-14**: Added flight bookings management with passengers and payment proof viewing
 - **2026-01-13**: Added crypto wallets management page

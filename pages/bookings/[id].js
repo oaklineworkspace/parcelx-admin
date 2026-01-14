@@ -64,6 +64,23 @@ export default function BookingDetail() {
     enabled: supabaseConfigured && !!id,
   })
 
+  const sendEmailNotification = async (emailType, bookingData) => {
+    if (!bookingData?.contact_email) return
+    try {
+      await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: bookingData.contact_email,
+          type: emailType,
+          booking: bookingData,
+        }),
+      })
+    } catch (err) {
+      console.error('Failed to send email:', err)
+    }
+  }
+
   const updateMutation = useMutation({
     mutationFn: async (updates) => {
       const { error } = await supabase
@@ -71,11 +88,28 @@ export default function BookingDetail() {
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
+      return updates
     },
-    onSuccess: () => {
+    onSuccess: async (updates) => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] })
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       notifications.show({ title: 'Success', message: 'Booking updated', color: 'green' })
+      
+      if (updates.status === 'confirmed') {
+        await sendEmailNotification('booking_confirmed', booking)
+        notifications.show({ title: 'Email Sent', message: 'Confirmation email sent to customer', color: 'blue' })
+      } else if (updates.status === 'cancelled') {
+        await sendEmailNotification('booking_cancelled', booking)
+        notifications.show({ title: 'Email Sent', message: 'Cancellation email sent to customer', color: 'orange' })
+      }
+      
+      if (updates.payment_status === 'paid') {
+        await sendEmailNotification('payment_approved', booking)
+        notifications.show({ title: 'Email Sent', message: 'Payment confirmation email sent to customer', color: 'blue' })
+      } else if (updates.payment_status === 'failed') {
+        await sendEmailNotification('payment_rejected', booking)
+        notifications.show({ title: 'Email Sent', message: 'Payment rejection email sent to customer', color: 'orange' })
+      }
     },
     onError: (error) => {
       notifications.show({ title: 'Error', message: error.message, color: 'red' })

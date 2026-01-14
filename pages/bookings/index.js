@@ -77,17 +77,43 @@ export default function BookingsList() {
   const bookings = bookingsData?.bookings || []
   const totalPages = Math.ceil((bookingsData?.total || 0) / ITEMS_PER_PAGE)
 
+  const sendEmailNotification = async (emailType, bookingData) => {
+    if (!bookingData?.contact_email) return
+    try {
+      await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: bookingData.contact_email,
+          type: emailType,
+          booking: bookingData,
+        }),
+      })
+    } catch (err) {
+      console.error('Failed to send email:', err)
+    }
+  }
+
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
+    mutationFn: async ({ id, status, booking }) => {
       const { error } = await supabase
         .from('flight_bookings')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
       if (error) throw error
+      return { status, booking }
     },
-    onSuccess: () => {
+    onSuccess: async ({ status, booking }) => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       notifications.show({ title: 'Success', message: 'Booking status updated', color: 'green' })
+      
+      if (status === 'confirmed') {
+        await sendEmailNotification('booking_confirmed', booking)
+        notifications.show({ title: 'Email Sent', message: 'Confirmation email sent to customer', color: 'blue' })
+      } else if (status === 'cancelled') {
+        await sendEmailNotification('booking_cancelled', booking)
+        notifications.show({ title: 'Email Sent', message: 'Cancellation email sent to customer', color: 'orange' })
+      }
     },
     onError: (error) => {
       notifications.show({ title: 'Error', message: error.message, color: 'red' })
@@ -95,7 +121,7 @@ export default function BookingsList() {
   })
 
   const updatePaymentMutation = useMutation({
-    mutationFn: async ({ id, payment_status }) => {
+    mutationFn: async ({ id, payment_status, booking }) => {
       const updateData = { 
         payment_status, 
         updated_at: new Date().toISOString() 
@@ -108,10 +134,19 @@ export default function BookingsList() {
         .update(updateData)
         .eq('id', id)
       if (error) throw error
+      return { payment_status, booking }
     },
-    onSuccess: () => {
+    onSuccess: async ({ payment_status, booking }) => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       notifications.show({ title: 'Success', message: 'Payment status updated', color: 'green' })
+      
+      if (payment_status === 'paid') {
+        await sendEmailNotification('payment_approved', booking)
+        notifications.show({ title: 'Email Sent', message: 'Payment confirmation email sent to customer', color: 'blue' })
+      } else if (payment_status === 'failed') {
+        await sendEmailNotification('payment_rejected', booking)
+        notifications.show({ title: 'Email Sent', message: 'Payment rejection email sent to customer', color: 'orange' })
+      }
     },
     onError: (error) => {
       notifications.show({ title: 'Error', message: error.message, color: 'red' })
@@ -299,7 +334,7 @@ export default function BookingsList() {
                             <Menu.Item 
                               leftSection={<IconCheck size={14} />} 
                               color="green"
-                              onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'confirmed' })}
+                              onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'confirmed', booking })}
                               disabled={booking.status === 'confirmed'}
                             >
                               Confirm Booking
@@ -309,7 +344,7 @@ export default function BookingsList() {
                               color="red"
                               onClick={() => {
                                 if (window.confirm('Cancel this booking?')) {
-                                  updateStatusMutation.mutate({ id: booking.id, status: 'cancelled' })
+                                  updateStatusMutation.mutate({ id: booking.id, status: 'cancelled', booking })
                                 }
                               }}
                               disabled={booking.status === 'cancelled'}
@@ -321,7 +356,7 @@ export default function BookingsList() {
                             <Menu.Item 
                               leftSection={<IconCreditCard size={14} />} 
                               color="green"
-                              onClick={() => updatePaymentMutation.mutate({ id: booking.id, payment_status: 'paid' })}
+                              onClick={() => updatePaymentMutation.mutate({ id: booking.id, payment_status: 'paid', booking })}
                               disabled={booking.payment_status === 'paid'}
                             >
                               Mark as Paid
@@ -329,7 +364,7 @@ export default function BookingsList() {
                             <Menu.Item 
                               leftSection={<IconCreditCard size={14} />} 
                               color="orange"
-                              onClick={() => updatePaymentMutation.mutate({ id: booking.id, payment_status: 'pending' })}
+                              onClick={() => updatePaymentMutation.mutate({ id: booking.id, payment_status: 'pending', booking })}
                               disabled={booking.payment_status === 'pending'}
                             >
                               Mark Payment Pending
