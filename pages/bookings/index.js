@@ -77,6 +77,65 @@ export default function BookingsList() {
   const bookings = bookingsData?.bookings || []
   const totalPages = Math.ceil((bookingsData?.total || 0) / ITEMS_PER_PAGE)
 
+  const generateETicketNumber = () => {
+    const prefix = '176'
+    const randomPart = Math.floor(Math.random() * 9000000000) + 1000000000
+    return `${prefix}-${randomPart}`
+  }
+
+  const fetchBookingDetails = async (bookingId) => {
+    const { data: booking } = await supabase
+      .from('flight_bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+    
+    if (!booking) return null
+
+    const { data: passengers } = await supabase
+      .from('flight_passengers')
+      .select('*')
+      .eq('booking_id', bookingId)
+
+    let flightDetails = null
+    if (booking.outbound_flight_id) {
+      const { data: flight } = await supabase
+        .from('flights')
+        .select('*')
+        .eq('id', booking.outbound_flight_id)
+        .single()
+      
+      if (flight) {
+        const { data: airline } = await supabase
+          .from('airlines')
+          .select('*')
+          .eq('id', flight.airline_id)
+          .single()
+        
+        const { data: depAirport } = await supabase
+          .from('airports')
+          .select('*')
+          .eq('id', flight.departure_airport_id)
+          .single()
+        
+        const { data: arrAirport } = await supabase
+          .from('airports')
+          .select('*')
+          .eq('id', flight.arrival_airport_id)
+          .single()
+
+        flightDetails = {
+          ...flight,
+          airline,
+          departure_airport: depAirport,
+          arrival_airport: arrAirport,
+        }
+      }
+    }
+
+    return { ...booking, passengers, flight: flightDetails }
+  }
+
   const sendEmailNotification = async (emailType, bookingData) => {
     if (!bookingData?.contact_email) return
     try {
@@ -96,12 +155,20 @@ export default function BookingsList() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status, booking }) => {
+      const updateData = { status, updated_at: new Date().toISOString() }
+      
+      if (status === 'confirmed' && !booking.eticket_number) {
+        updateData.eticket_number = generateETicketNumber()
+      }
+      
       const { error } = await supabase
         .from('flight_bookings')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', id)
       if (error) throw error
-      return { status, booking }
+      
+      const fullBooking = await fetchBookingDetails(id)
+      return { status, booking: fullBooking || { ...booking, ...updateData } }
     },
     onSuccess: async ({ status, booking }) => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
