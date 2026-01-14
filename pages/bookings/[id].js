@@ -366,15 +366,23 @@ export default function BookingDetail() {
                   </>
                 )}
 
-                {booking.payment_proof_url && (
+                <Divider my="xs" />
+                <Text size="sm" fw={500}>Payment Proof</Text>
+                {booking.payment_proof_url ? (
                   <Button 
-                    variant="light" 
-                    leftSection={<IconPhoto size={16} />}
+                    variant="filled"
+                    color="blue"
+                    size="md"
+                    leftSection={<IconPhoto size={18} />}
                     onClick={() => setProofModal(true)}
                     fullWidth
                   >
                     View Payment Proof
                   </Button>
+                ) : (
+                  <Text size="sm" c="dimmed" ta="center" py="xs">
+                    No payment proof uploaded yet
+                  </Text>
                 )}
 
                 {booking.verified_at && (
