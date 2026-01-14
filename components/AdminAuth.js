@@ -15,7 +15,9 @@ export default function AdminAuth({ children }) {
   const supabaseConfigured = isSupabaseConfigured()
 
   useEffect(() => {
-    checkAuth()
+    if (typeof window !== 'undefined') {
+      checkAuth()
+    }
   }, [])
 
   const checkAuth = async () => {
